@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: oplang-compiler-api
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: OPLANG_MAX_SOURCE_BYTES
+        value: "102400"
+      - key: OPLANG_ALLOWED_ORIGINS
+        sync: false
