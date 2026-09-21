@@ -1,27 +1,43 @@
-import type { CompilationResult } from '../types/compiler'
+import type { CompilationResult, CompileOptions } from '../types/compiler'
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
+const DEFAULT_API_URL = 'http://localhost:8000'
+const API_URL = (import.meta.env.VITE_API_URL ?? DEFAULT_API_URL).replace(/\/$/, '')
 
-export async function compileSource(source: string): Promise<CompilationResult> {
+type ApiErrorBody = {
+  detail?: string | { message?: string }
+}
+
+function errorMessage(body: ApiErrorBody, fallback: string): string {
+  if (typeof body.detail === 'string') return body.detail
+  return body.detail?.message ?? fallback
+}
+
+export async function compileSource(
+  source: string,
+  options: CompileOptions,
+  signal?: AbortSignal
+): Promise<CompilationResult> {
   const response = await fetch(`${API_URL}/api/v1/compile`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       source,
-      options: { includeAst: true, includeJasmin: true }
-    })
+      options
+    }),
+    signal
   })
 
   if (!response.ok) {
-    let message = `HTTP ${response.status}`
+    const fallback = `Compiler API returned HTTP ${response.status}`
+    let message = fallback
     try {
-      const body = await response.json()
-      message = body.detail ?? message
+      const body = (await response.json()) as ApiErrorBody
+      message = errorMessage(body, fallback)
     } catch {
-      // keep fallback
+      // The response may not contain JSON; retain the HTTP status fallback.
     }
     throw new Error(message)
   }
 
-  return response.json()
+  return (await response.json()) as CompilationResult
 }

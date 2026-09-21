@@ -1,4 +1,11 @@
-export type CompilerError = {
+export type CompilerStage =
+  | 'lexer'
+  | 'parser'
+  | 'ast'
+  | 'semantic'
+  | 'codegen'
+
+export interface CompilerError {
   stage: string
   code: string
   message: string
@@ -6,9 +13,14 @@ export type CompilerError = {
   column?: number | null
 }
 
-export type CompilationResult = {
+export interface CompileOptions {
+  includeAst: boolean
+  includeJasmin: boolean
+}
+
+export interface CompilationResult {
   success: boolean
-  stage: string
+  stage: CompilerStage
   ast: unknown | null
   jasmin_files: Record<string, string>
   errors: CompilerError[]

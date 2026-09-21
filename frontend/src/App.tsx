@@ -1,59 +1,69 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { CodeEditor } from './components/CodeEditor'
+import { Header } from './components/Header'
 import { ResultPanel } from './components/ResultPanel'
-import { compileSource } from './services/compilerApi'
-import type { CompilationResult } from './types/compiler'
+import { compilerExamples, type CompilerExample } from './data/examples'
+import { useCompiler } from './features/compiler/useCompiler'
 import './styles.css'
 
-const DEFAULT_SOURCE = `class Main {
-    static void main() {
-        io.writeIntLn(10);
-    }
-}`
+const SOURCE_STORAGE_KEY = 'oplang-compiler-lite:source'
+const DEFAULT_SOURCE = compilerExamples[0].source
 
 export default function App() {
-  const [source, setSource] = useState(() => localStorage.getItem('oplang-source') ?? DEFAULT_SOURCE)
-  const [result, setResult] = useState<CompilationResult | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [source, setSource] = useState(
+    () => localStorage.getItem(SOURCE_STORAGE_KEY) ?? DEFAULT_SOURCE
+  )
+  const { result, networkError, loading, compile, clearResult } = useCompiler()
 
   useEffect(() => {
-    localStorage.setItem('oplang-source', source)
+    localStorage.setItem(SOURCE_STORAGE_KEY, source)
   }, [source])
 
-  async function onCompile() {
-    setLoading(true)
-    setError(null)
-    try {
-      setResult(await compileSource(source))
-    } catch (e) {
-      setResult(null)
-      setError(e instanceof Error ? e.message : 'Compilation request failed')
-    } finally {
-      setLoading(false)
+  const onCompile = useCallback(() => {
+    if (!loading) void compile(source)
+  }, [compile, loading, source])
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.key !== 'Enter') return
+      event.preventDefault()
+      onCompile()
     }
-  }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onCompile])
+
+  const updateSource = useCallback(
+    (nextSource: string) => {
+      setSource(nextSource)
+      clearResult()
+    },
+    [clearResult]
+  )
+
+  const selectExample = useCallback(
+    (example: CompilerExample) => updateSource(example.source),
+    [updateSource]
+  )
 
   return (
     <main>
-      <header>
-        <div>
-          <h1>OPLang Compiler Lite</h1>
-          <p>OPLang → Lexer → Parser → AST → Semantic Check → Jasmin</p>
-        </div>
-        <button className="compileButton" onClick={onCompile} disabled={loading}>
-          {loading ? 'Compiling…' : 'Compile ▶'}
-        </button>
-      </header>
+      <Header
+        examples={compilerExamples}
+        loading={loading}
+        onCompile={onCompile}
+        onSelectExample={selectExample}
+      />
 
       <section className="workspace">
         <div className="column">
           <div className="sectionTitle">Source Code</div>
-          <CodeEditor value={source} onChange={setSource} />
+          <CodeEditor value={source} onChange={updateSource} />
         </div>
         <div className="column">
           <div className="sectionTitle">Result</div>
-          <ResultPanel result={result} error={error} />
+          <ResultPanel result={result} networkError={networkError} loading={loading} />
         </div>
       </section>
     </main>
