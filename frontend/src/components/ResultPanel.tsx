@@ -3,20 +3,27 @@ import type { CompilationResult } from '../types/compiler'
 
 type Props = {
   result: CompilationResult | null
-  error: string | null
+  networkError: string | null
+  loading: boolean
 }
 
 type Tab = 'summary' | 'errors' | 'ast' | 'jasmin'
 
-export function ResultPanel({ result, error }: Props) {
+export function ResultPanel({ result, networkError, loading }: Props) {
   const [tab, setTab] = useState<Tab>('summary')
 
-  if (error) return <div className="panel errorBox">{error}</div>
+  if (loading) return <div className="panel muted">Compiling with the OPLang pipeline…</div>
+  if (networkError) {
+    return (
+      <div className="panel errorBox" role="alert">
+        <strong>Could not reach the compiler API.</strong>
+        <div>{networkError}</div>
+      </div>
+    )
+  }
   if (!result) return <div className="panel muted">Compile a program to see results.</div>
 
-  const jasmin = Object.entries(result.jasmin_files ?? {})
-    .map(([name, code]) => `// ${name}\n${code}`)
-    .join('\n\n')
+  const jasminFiles = Object.entries(result.jasmin_files ?? {})
 
   return (
     <div className="panel resultPanel">
@@ -29,11 +36,35 @@ export function ResultPanel({ result, error }: Props) {
       </div>
 
       {tab === 'summary' && (
-        <pre>{JSON.stringify({ success: result.success, stage: result.stage, compilation_time_ms: result.compilation_time_ms }, null, 2)}</pre>
+        <dl className="summary">
+          <div><dt>Status</dt><dd>{result.success ? 'Success' : 'Failed'}</dd></div>
+          <div><dt>Stage</dt><dd>{result.stage}</dd></div>
+          <div><dt>Compilation time</dt><dd>{result.compilation_time_ms.toFixed(2)} ms</dd></div>
+        </dl>
       )}
-      {tab === 'errors' && <pre>{JSON.stringify(result.errors, null, 2)}</pre>}
-      {tab === 'ast' && <pre>{JSON.stringify(result.ast, null, 2)}</pre>}
-      {tab === 'jasmin' && <pre>{jasmin || 'No Jasmin generated.'}</pre>}
+      {tab === 'errors' && (
+        result.errors.length === 0
+          ? <div className="emptyResult">No compiler errors.</div>
+          : <ul className="compilerErrors">
+              {result.errors.map((compilerError, index) => (
+                <li key={`${compilerError.code}-${index}`}>
+                  <strong>{compilerError.code}</strong>
+                  <span>{compilerError.message}</span>
+                </li>
+              ))}
+            </ul>
+      )}
+      {tab === 'ast' && <pre>{result.ast ? JSON.stringify(result.ast, null, 2) : 'No AST returned.'}</pre>}
+      {tab === 'jasmin' && (
+        jasminFiles.length === 0
+          ? <div className="emptyResult">No Jasmin generated.</div>
+          : jasminFiles.map(([name, code]) => (
+              <section className="jasminFile" key={name}>
+                <h3>{name}</h3>
+                <pre>{code}</pre>
+              </section>
+            ))
+      )}
     </div>
   )
 }

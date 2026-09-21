@@ -15,6 +15,9 @@ h1 { margin: 0 0 4px; font-size: 20px; }
 header p { margin: 0; color: #94a3b8; font-size: 13px; }
 .compileButton { border: 0; border-radius: 8px; padding: 11px 18px; cursor: pointer; font-weight: 700; }
 .compileButton:disabled { cursor: progress; opacity: .65; }
+.headerActions { display: flex; align-items: center; gap: 10px; }
+.headerActions label { color: #94a3b8; font-size: 13px; }
+.headerActions select { color: #e5e7eb; background: #0f172a; border: 1px solid #334155; border-radius: 7px; padding: 9px 10px; }
 .workspace { display: grid; grid-template-columns: 1fr 1fr; min-height: calc(100vh - 76px); }
 .column { min-width: 0; border-right: 1px solid #25304a; }
 .sectionTitle { padding: 10px 14px; font-size: 12px; letter-spacing: .08em; color: #94a3b8; background: #0f172a; border-bottom: 1px solid #25304a; }
@@ -26,4 +29,18 @@ header p { margin: 0; color: #94a3b8; font-size: 13px; }
 pre { white-space: pre-wrap; word-break: break-word; margin: 0; padding: 14px; font-size: 13px; }
 .muted { color: #94a3b8; }
 .errorBox { color: #fecaca; background: #321818; }
-@media (max-width: 900px) { .workspace { grid-template-columns: 1fr; } }
+.errorBox strong { display: block; margin-bottom: 8px; }
+.summary { display: grid; gap: 10px; margin: 0; padding: 18px; }
+.summary div { display: flex; justify-content: space-between; gap: 16px; border-bottom: 1px solid #25304a; padding-bottom: 10px; }
+.summary dt { color: #94a3b8; }
+.summary dd { margin: 0; font-weight: 700; }
+.emptyResult { padding: 18px; color: #94a3b8; }
+.compilerErrors { display: grid; gap: 10px; list-style: none; margin: 0; padding: 16px; }
+.compilerErrors li { display: grid; gap: 5px; padding: 12px; color: #fecaca; background: #321818; border-radius: 7px; }
+.jasminFile h3 { position: sticky; top: 0; margin: 0; padding: 10px 14px; background: #182238; border-bottom: 1px solid #25304a; font-size: 13px; }
+@media (max-width: 900px) {
+  header { align-items: flex-start; flex-direction: column; }
+  .headerActions { align-items: stretch; flex-wrap: wrap; width: 100%; }
+  .headerActions select { flex: 1; }
+  .workspace { grid-template-columns: 1fr; }
+}

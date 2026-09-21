@@ -68,33 +68,19 @@ oplang-compiler-lite/
 
 After the compiler migration phase, the repository also contains the independent compiler implementation under `src/` and generated ANTLR modules under ignored `build/`.
 
-## Current starter status
+## Current status
 
-This starter intentionally separates platform bootstrap from compiler migration.
+The compiler migration and web integration are complete for the compile-only v1 scope:
 
-Already scaffolded:
+- `OPLangCompiler` runs lexer, parser, AST generation, semantic analysis, and Jasmin generation;
+- each request uses an isolated temporary output directory;
+- FastAPI exposes real health and compilation results with a 100 KiB source guard;
+- React uses a typed API client, verified examples, request cancellation, and distinct compiler/network errors;
+- source is persisted in browser `localStorage`;
+- Ctrl/Cmd+Enter compiles without interfering with ordinary Enter input;
+- compiler, API, and frontend build checkpoints are documented in [docs/testing.md](docs/testing.md).
 
-- FastAPI app and health endpoint;
-- compile API contract and request-size guard;
-- `OPLangCompiler` facade boundary;
-- React/Vite/TypeScript frontend;
-- Monaco editor;
-- result tabs;
-- browser `localStorage` persistence;
-- Docker/Compose;
-- Render blueprint;
-- GitHub Actions CI skeleton;
-- zero-cost and security documentation.
-
-Next required milestone:
-
-1. copy the compiler implementation into this repository once;
-2. build ANTLR;
-3. restore compiler tests;
-4. make code generation use a per-request output directory;
-5. implement the real `OPLangCompiler.compile()` pipeline.
-
-See **[docs/MASTER-GUIDE.md](docs/MASTER-GUIDE.md)**.
+See [docs/architecture.md](docs/architecture.md) for the dependency boundaries.
 
 ## Local API quick start
 
@@ -112,7 +98,7 @@ http://localhost:8000/docs
 http://localhost:8000/api/v1/health
 ```
 
-Before compiler migration, `/health` works and reports `compilerCoreInstalled: false`; `/compile` intentionally returns a bootstrap error rather than silently depending on another repository.
+`/health` reports whether the compiler core and generated ANTLR modules are actually installed. `/compile` returns compiler-domain errors as structured results and never executes generated Jasmin.
 
 ## Local frontend quick start
 
